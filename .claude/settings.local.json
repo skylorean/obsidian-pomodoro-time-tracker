@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la *.js)",
+      "Bash(npm run build)"
+    ]
+  }
+}

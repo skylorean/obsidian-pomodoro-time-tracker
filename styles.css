@@ -6,3 +6,143 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* Pomodoro Timer Container */
+.pomodoro-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	height: 100%;
+	color: var(--text-normal);
+}
+
+.pomodoro-clock-container {
+	position: relative;
+}
+
+/* Clock SVG */
+.pomodoro-clock-svg {
+	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.pomodoro-clock-lines {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 10;
+}
+
+/* Clock Face */
+.pomodoro-clock-face {
+	fill: #fafafa;
+	/* fill: #fafafa; */
+	stroke: #ddd;
+	stroke-width: 4;
+}
+
+/* Tick Marks - Minor */
+.pomodoro-tick-minor {
+	stroke: #b7b6b6;
+	stroke-width: 1;
+}
+
+/* Tick Marks - Major (every 5 seconds) */
+.pomodoro-tick-major {
+	stroke: #999;
+	stroke-width: 2;
+}
+
+/* Second Hand - thinner, shows current second */
+.pomodoro-second-hand {
+	stroke: #cc5555;
+	stroke-width: 3;
+	transition: transform 0.1s linear;
+	position: relative;
+	z-index: 10;
+}
+
+/* Center Dot */
+.pomodoro-center-dot {
+	fill: #ff6b6b;
+	stroke: #fff;
+	stroke-width: 2;
+}
+
+/* Digital Time Display */
+.pomodoro-time-display {
+	position: absolute;
+	top: 55%;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	border-radius: 0.5rem;
+	background-color: rgba(0, 0, 0, 0.3);
+	padding: 0.25rem 2rem;
+	font-size: 1.5rem;
+	font-weight: bold;
+	font-variant-numeric: tabular-nums;
+	user-select: none;
+	color: var(--text-normal);
+}
+
+/* Controls Container */
+.pomodoro-controls {
+	display: flex;
+	gap: 1rem;
+	margin-top: 0.5rem;
+}
+
+/* Base Button Styles */
+.pomodoro-btn {
+	padding: 0.75rem 2rem;
+	border-radius: 8px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: all 0.2s;
+	font-weight: 500;
+}
+
+.pomodoro-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pomodoro-btn:active {
+	transform: translateY(0);
+}
+
+/* Start Button - Green */
+.pomodoro-btn-start {
+	background-color: #4caf50;
+	color: white;
+}
+
+.pomodoro-btn-start:hover {
+	background-color: #45a049;
+}
+
+/* Pause Button - Orange */
+.pomodoro-btn-pause {
+	background-color: #ff9800;
+	color: white;
+}
+
+.pomodoro-btn-pause:hover {
+	background-color: #fb8c00;
+}
+
+/* Reset Button - Red */
+.pomodoro-btn-reset {
+	background-color: #f44336;
+	color: white;
+}
+
+.pomodoro-btn-reset:hover {
+	background-color: #e53935;
+}
