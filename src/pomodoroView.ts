@@ -1,4 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
+import { TimerStorage } from "./timerStorage";
+import type { TimerState } from "./types";
 
 export const VIEW_TYPE_POMODORO = "pomodoro-timer";
 
@@ -18,13 +20,37 @@ export class PomodoroView extends ItemView {
 	private readonly centerY = 100;
 	private readonly radius = 93;
 
+	// Storage for timer state persistence
+	private readonly storage: TimerStorage;
+	// Flag to show "Resume" instead of "Start" when restoring paused state
+	private wasRestoredFromPause = false;
+	// Message to show if timer expired while away
+	private expiredNotice: string | null = null;
+
 	constructor(
 		leaf: WorkspaceLeaf,
 		private workDuration: number,
 	) {
 		super(leaf);
-		this.timerSeconds = workDuration * 60;
-		this.initialSeconds = workDuration * 60;
+
+		// Initialize storage with app instance
+		this.storage = new TimerStorage(this.app);
+
+		// Try to restore previous state
+		const restoreResult = this.storage.restore();
+
+		if (restoreResult.success && restoreResult.state) {
+			this.timerSeconds = restoreResult.state.timerSeconds;
+			this.initialSeconds = restoreResult.state.initialSeconds;
+			this.wasRestoredFromPause = true;
+		} else {
+			this.timerSeconds = workDuration * 60;
+			this.initialSeconds = workDuration * 60;
+
+			if (restoreResult.error === "Timer expired while away") {
+				this.expiredNotice = "Your previous Pomodoro session completed while you were away!";
+			}
+		}
 	}
 
 	getViewType(): string {
@@ -37,9 +63,16 @@ export class PomodoroView extends ItemView {
 
 	async onOpen() {
 		this.render();
+
+		// Show notice if timer expired while away
+		if (this.expiredNotice) {
+			new Notice(this.expiredNotice);
+			this.expiredNotice = null;
+		}
 	}
 
 	async onClose() {
+		this.saveState();
 		this.stopTimer();
 	}
 
@@ -107,7 +140,7 @@ export class PomodoroView extends ItemView {
 		// Start button
 		this.startBtn = controls.createEl("button", {
 			cls: "pomodoro-btn pomodoro-btn-start",
-			text: "Start",
+			text: this.wasRestoredFromPause ? "Resume" : "Start",
 		});
 		this.startBtn.addEventListener("click", () => this.startTimer());
 
@@ -160,6 +193,7 @@ export class PomodoroView extends ItemView {
 		if (this.isRunning) return;
 
 		this.isRunning = true;
+		this.wasRestoredFromPause = false;
 		if (this.startBtn) this.startBtn.style.display = "none";
 		if (this.pauseBtn) this.pauseBtn.style.display = "inline-block";
 
@@ -168,8 +202,10 @@ export class PomodoroView extends ItemView {
 				this.timerSeconds--;
 				this.updateTimeDisplay();
 				this.updateClockHands();
+				this.saveState();
 			} else {
 				this.stopTimer();
+				this.storage.clear();
 				new Notice("Pomodoro session complete! Time for a break.");
 			}
 		}, 1000);
@@ -179,6 +215,7 @@ export class PomodoroView extends ItemView {
 		if (!this.isRunning) return;
 
 		this.stopTimer();
+		this.saveState();
 		if (this.startBtn) {
 			this.startBtn.style.display = "inline-block";
 			this.startBtn.textContent = "Resume";
@@ -197,13 +234,28 @@ export class PomodoroView extends ItemView {
 	private resetTimer() {
 		this.stopTimer();
 		this.timerSeconds = this.initialSeconds;
+		this.wasRestoredFromPause = false;
 		this.updateTimeDisplay();
 		this.updateClockHands();
+		this.storage.clear();
 		if (this.startBtn) {
 			this.startBtn.style.display = "inline-block";
 			this.startBtn.textContent = "Start";
 		}
 		if (this.pauseBtn) this.pauseBtn.style.display = "none";
+	}
+
+	/**
+	 * Saves current timer state to localStorage
+	 */
+	private saveState(): void {
+		const state: TimerState = {
+			timerSeconds: this.timerSeconds,
+			initialSeconds: this.initialSeconds,
+			isRunning: this.isRunning,
+			savedAt: Date.now(),
+		};
+		this.storage.save(state);
 	}
 
 	private updateTimeDisplay() {
