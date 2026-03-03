@@ -1,0 +1,9 @@
+@use "../variables" as *;
+
+.pomodoro-progress-work {
+	fill: $work-progress-color;
+}
+
+.pomodoro-progress-break {
+	fill: $break-progress-color;
+}

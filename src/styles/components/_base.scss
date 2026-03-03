@@ -1,0 +1,28 @@
+@use "../variables" as *;
+
+.pomodoro-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	height: 100%;
+	color: var(--text-normal);
+}
+
+.pomodoro-clock-container {
+	position: relative;
+}
+
+.pomodoro-clock-svg {
+	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.pomodoro-clock-lines {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 10;
+}

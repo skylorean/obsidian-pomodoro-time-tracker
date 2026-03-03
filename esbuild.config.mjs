@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from 'node:module';
+import { sassPlugin } from 'esbuild-sass-plugin';
 
 const banner =
 `/*
@@ -39,11 +40,39 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	plugins: [
+		sassPlugin({
+			type: "css",
+			cssImports: true,
+		}),
+	],
+	loader: {
+		".scss": "css",
+	},
+});
+
+// Separate CSS build from SCSS
+const cssContext = await esbuild.context({
+	entryPoints: ["src/styles/main.scss"],
+	bundle: true,
+	outfile: "styles.css",
+	loader: {
+		".scss": "css",
+	},
+	plugins: [
+		sassPlugin({
+			type: "css",
+		}),
+	],
+	sourcemap: prod ? false : "inline",
+	minify: prod,
 });
 
 if (prod) {
 	await context.rebuild();
+	await cssContext.rebuild();
 	process.exit(0);
 } else {
 	await context.watch();
+	await cssContext.watch();
 }

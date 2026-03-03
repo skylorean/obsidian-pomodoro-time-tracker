@@ -1,0 +1,46 @@
+$work-progress-color: rgba(255, 140, 0, 0.35);
+$work-progress-active: #ff9800;
+
+$break-progress-color: rgba(50, 205, 50, 0.35);
+$break-progress-active: #4caf50;
+
+$clock-face-fill: #fafafa;
+$clock-face-stroke: #ddd;
+$clock-face-stroke-width: 4;
+
+$tick-minor-stroke: #b7b6b6;
+$tick-minor-width: 1;
+$tick-major-stroke: #999;
+$tick-major-width: 2;
+
+$second-hand-stroke: #cc5555;
+$second-hand-width: 3;
+$second-hand-transition: 0.1s linear;
+
+$center-dot-fill: #ff6b6b;
+$center-dot-stroke: #fff;
+$center-dot-stroke-width: 2;
+
+$btn-text-color: white;
+$btn-start-bg: #4caf50;
+$btn-start-hover: #45a049;
+$btn-pause-bg: #ff9800;
+$btn-pause-hover: #fb8c00;
+$btn-reset-bg: #f44336;
+$btn-reset-hover: #e53935;
+
+$border-radius: 8px;
+$border-radius-sm: 0.5rem;
+$btn-padding: 0.75rem 2rem;
+$toggle-padding: 0.5rem 3rem;
+
+$font-size-base: 1rem;
+$font-weight-medium: 500;
+$spacing-sm: 0.5rem;
+$spacing-lg: 1rem;
+
+$transition-fast: 0.2s;
+$transition-hand: 0.1s linear;
+
+$shadow-clock: 0 4px 12px rgba(0, 0, 0, 0.15);
+$shadow-btn-hover: 0 4px 8px rgba(0, 0, 0, 0.2);

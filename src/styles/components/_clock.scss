@@ -1,0 +1,31 @@
+@use "../variables" as *;
+
+.pomodoro-clock-face {
+	fill: $clock-face-fill;
+	stroke: $clock-face-stroke;
+	stroke-width: $clock-face-stroke-width;
+}
+
+.pomodoro-tick-minor {
+	stroke: $tick-minor-stroke;
+	stroke-width: $tick-minor-width;
+}
+
+.pomodoro-tick-major {
+	stroke: $tick-major-stroke;
+	stroke-width: $tick-major-width;
+}
+
+.pomodoro-second-hand {
+	stroke: $second-hand-stroke;
+	stroke-width: $second-hand-width;
+	transition: transform $second-hand-transition;
+	position: relative;
+	z-index: 10;
+}
+
+.pomodoro-center-dot {
+	fill: $center-dot-fill;
+	stroke: $center-dot-stroke;
+	stroke-width: $center-dot-stroke-width;
+}

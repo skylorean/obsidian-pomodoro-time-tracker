@@ -1,0 +1,53 @@
+@use "../variables" as *;
+
+.pomodoro-controls {
+	display: flex;
+	gap: $spacing-lg;
+	margin-top: $spacing-sm;
+}
+
+.pomodoro-btn {
+	padding: $btn-padding;
+	border-radius: $border-radius;
+	border: none;
+	cursor: pointer;
+	font-size: $font-size-base;
+	transition: all $transition-fast;
+	font-weight: $font-weight-medium;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: $shadow-btn-hover;
+	}
+
+	&:active {
+		transform: translateY(0);
+	}
+}
+
+.pomodoro-btn-start {
+	background-color: $btn-start-bg;
+	color: $btn-text-color;
+
+	&:hover {
+		background-color: $btn-start-hover;
+	}
+}
+
+.pomodoro-btn-pause {
+	background-color: $btn-pause-bg;
+	color: $btn-text-color;
+
+	&:hover {
+		background-color: $btn-pause-hover;
+	}
+}
+
+.pomodoro-btn-reset {
+	background-color: $btn-reset-bg;
+	color: $btn-text-color;
+
+	&:hover {
+		background-color: $btn-reset-hover;
+	}
+}
