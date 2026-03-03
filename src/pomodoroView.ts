@@ -17,7 +17,7 @@ export class PomodoroView extends ItemView {
 	private resetBtn: HTMLElement | null = null;
 	private workBtn: HTMLElement | null = null;
 	private breakBtn: HTMLElement | null = null;
-	private mode: TimerMode = 'work';
+	private mode: TimerMode = "work";
 	private breakDuration: number;
 
 	// Clock dimensions
@@ -97,17 +97,22 @@ export class PomodoroView extends ItemView {
 		container.addClass("pomodoro-container");
 
 		// Mode toggle (Work | Break)
-		const toggle = container.createEl("div", { cls: "pomodoro-mode-toggle" });
+		const toggle = container.createEl("div", {
+			cls: "pomodoro-mode-toggle",
+		});
 		this.workBtn = toggle.createEl("button", {
-			cls: "pomodoro-toggle-btn" + (this.mode === 'work' ? " active" : ""),
+			cls:
+				"pomodoro-toggle-btn" + (this.mode === "work" ? " active" : ""),
 			text: "Work",
 		});
 		this.breakBtn = toggle.createEl("button", {
-			cls: "pomodoro-toggle-btn" + (this.mode === 'break' ? " active" : ""),
+			cls:
+				"pomodoro-toggle-btn" +
+				(this.mode === "break" ? " active" : ""),
 			text: "Break",
 		});
-		this.workBtn.addEventListener("click", () => this.switchMode('work'));
-		this.breakBtn.addEventListener("click", () => this.switchMode('break'));
+		this.workBtn.addEventListener("click", () => this.switchMode("work"));
+		this.breakBtn.addEventListener("click", () => this.switchMode("break"));
 
 		const clockContainer = container.createEl("div", {
 			cls: "pomodoro-clock-container",
@@ -130,7 +135,11 @@ export class PomodoroView extends ItemView {
 		// Progress arc overlay
 		this.progressPath = svg.createSvg("path");
 		this.progressPath.addClass("pomodoro-progress-arc");
-		this.progressPath.addClass(this.mode === 'work' ? 'pomodoro-progress-work' : 'pomodoro-progress-break');
+		this.progressPath.addClass(
+			this.mode === "work"
+				? "pomodoro-progress-work"
+				: "pomodoro-progress-break",
+		);
 		this.updateProgressArc();
 
 		// Tick marks
@@ -229,6 +238,8 @@ export class PomodoroView extends ItemView {
 		if (this.startBtn) this.startBtn.style.display = "none";
 		if (this.pauseBtn) this.pauseBtn.style.display = "inline-block";
 
+		const currentMode = this.mode === "work" ? "Work" : "Break";
+
 		this.intervalId = window.setInterval(() => {
 			if (this.timerSeconds > 0) {
 				this.timerSeconds--;
@@ -236,9 +247,13 @@ export class PomodoroView extends ItemView {
 				this.updateClockHands();
 				this.saveState();
 			} else {
+				const nextMode: TimerMode = this.mode === "work" ? "break" : "work";
 				this.stopTimer();
 				this.storage.clear();
-				new Notice("Pomodoro session complete! Time for a break.");
+				new Notice(
+					`Pomodoro ${currentMode} session complete! Time for a ${nextMode} session.`,
+				);
+				this.switchMode(nextMode);
 			}
 		}, 1000);
 	}
@@ -353,7 +368,8 @@ export class PomodoroView extends ItemView {
 
 		this.stopTimer();
 		this.mode = newMode;
-		this.timerSeconds = (newMode === 'work' ? this.workDuration : this.breakDuration) * 60;
+		this.timerSeconds =
+			(newMode === "work" ? this.workDuration : this.breakDuration) * 60;
 		this.initialSeconds = this.timerSeconds;
 		this.wasRestoredFromPause = false;
 
@@ -372,23 +388,29 @@ export class PomodoroView extends ItemView {
 
 	private updateProgressArcColor() {
 		if (!this.progressPath) return;
-		this.progressPath.removeClass('pomodoro-progress-work');
-		this.progressPath.removeClass('pomodoro-progress-break');
-		this.progressPath.addClass(this.mode === 'work' ? 'pomodoro-progress-work' : 'pomodoro-progress-break');
+		this.progressPath.removeClass("pomodoro-progress-work");
+		this.progressPath.removeClass("pomodoro-progress-break");
+		this.progressPath.addClass(
+			this.mode === "work"
+				? "pomodoro-progress-work"
+				: "pomodoro-progress-break",
+		);
 	}
 
 	private updateToggleButton() {
 		if (this.workBtn) {
-			this.workBtn.toggleClass('active', this.mode === 'work');
+			this.workBtn.toggleClass("active", this.mode === "work");
 		}
 		if (this.breakBtn) {
-			this.breakBtn.toggleClass('active', this.mode === 'break');
+			this.breakBtn.toggleClass("active", this.mode === "break");
 		}
 	}
 
 	private updateStartButtonText() {
 		if (this.startBtn) {
-			this.startBtn.textContent = this.wasRestoredFromPause ? "Resume" : "Start";
+			this.startBtn.textContent = this.wasRestoredFromPause
+				? "Resume"
+				: "Start";
 		}
 	}
 }
