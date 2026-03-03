@@ -3,16 +3,23 @@
 .pomodoro-container {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	justify-content: center;
 	padding: 2rem;
 	height: 100%;
 	color: var(--text-normal);
 	container-type: inline-size;
+	width: 100%;
+}
+
+.pomodoro-wrapper {
+	max-width: 300px;
+	width: 100%;
+	margin: 0 auto;
 }
 
 .pomodoro-clock-container {
 	position: relative;
+	margin: 0 auto;
 	width: clamp(120px, 80cqw, 250px);
 	aspect-ratio: 1;
 }
