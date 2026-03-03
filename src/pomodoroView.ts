@@ -10,6 +10,7 @@ export class PomodoroView extends ItemView {
 	private intervalId: number | null = null;
 	private isRunning: boolean = false;
 	private secondHand: SVGLineElement | null = null;
+	private centerDot: SVGCircleElement | null = null;
 	private progressPath: SVGPathElement | null = null;
 	private timeDisplay: HTMLElement | null = null;
 	private startBtn: HTMLElement | null = null;
@@ -96,8 +97,12 @@ export class PomodoroView extends ItemView {
 		container.empty();
 		container.addClass("pomodoro-container");
 
+		const wrapper = container.createEl("div", {
+			cls: "pomodoro-wrapper",
+		});
+
 		// Mode toggle (Work | Break)
-		const toggle = container.createEl("div", {
+		const toggle = wrapper.createEl("div", {
 			cls: "pomodoro-mode-toggle",
 		});
 		this.workBtn = toggle.createEl("button", {
@@ -114,15 +119,13 @@ export class PomodoroView extends ItemView {
 		this.workBtn.addEventListener("click", () => this.switchMode("work"));
 		this.breakBtn.addEventListener("click", () => this.switchMode("break"));
 
-		const clockContainer = container.createEl("div", {
+		const clockContainer = wrapper.createEl("div", {
 			cls: "pomodoro-clock-container",
 		});
 
 		// Create SVG for analog clock FIRST
 		const svg = clockContainer.createSvg("svg");
 		svg.addClass("pomodoro-clock-svg");
-		svg.setAttribute("width", "200");
-		svg.setAttribute("height", "200");
 		svg.setAttribute("viewBox", "0 0 200 200");
 
 		// Clock face background
@@ -147,6 +150,7 @@ export class PomodoroView extends ItemView {
 		// Second hand (thinner, shows current second)
 		const clockLines = clockContainer.createSvg("svg");
 		clockLines.addClass("pomodoro-clock-lines");
+		clockLines.setAttribute("viewBox", "0 0 200 200");
 
 		// this.renderTickMarks(clockLines);
 		this.renderTickMarks(svg);
@@ -160,11 +164,11 @@ export class PomodoroView extends ItemView {
 		this.secondHand.setAttribute("stroke-linecap", "round");
 
 		// Center dot
-		const centerDot = clockLines.createSvg("circle");
-		centerDot.addClass("pomodoro-center-dot");
-		centerDot.setAttribute("cx", this.centerX.toString());
-		centerDot.setAttribute("cy", this.centerY.toString());
-		centerDot.setAttribute("r", "8");
+		this.centerDot = clockLines.createSvg("circle");
+		this.centerDot.addClass("pomodoro-center-dot");
+		this.centerDot.setAttribute("cx", this.centerX.toString());
+		this.centerDot.setAttribute("cy", this.centerY.toString());
+		this.centerDot.setAttribute("r", "8");
 
 		// Digital time display SECOND (renders after SVG in normal flow)
 		this.timeDisplay = clockContainer.createEl("div", {
@@ -174,7 +178,7 @@ export class PomodoroView extends ItemView {
 		this.updateClockHands();
 
 		// Controls container
-		const controls = container.createEl("div", {
+		const controls = wrapper.createEl("div", {
 			cls: "pomodoro-controls",
 		});
 
@@ -386,6 +390,7 @@ export class PomodoroView extends ItemView {
 		this.updateTimeDisplay();
 		this.updateClockHands();
 		this.updateProgressArcColor();
+		this.updateCenterDotColor();
 		this.updateToggleButton();
 		this.updateStartButtonText();
 	}
@@ -399,6 +404,11 @@ export class PomodoroView extends ItemView {
 				? "pomodoro-progress-work"
 				: "pomodoro-progress-break",
 		);
+	}
+
+	private updateCenterDotColor() {
+		if (!this.centerDot) return;
+		this.centerDot.toggleClass("break-mode", this.mode === "break");
 	}
 
 	private updateToggleButton() {

@@ -1,24 +1,31 @@
-$work-progress-color: rgba(255, 140, 0, 0.35);
+// $work-progress-color: #f87d1d;
+$work-progress-color: color-mix(
+	in srgb,
+	var(--interactive-accent) 65%,
+	transparent
+);
 $work-progress-active: #ff9800;
 
-$break-progress-color: rgba(50, 205, 50, 0.35);
+$break-progress-color: color-mix(in srgb, #4caf50 90%, transparent);
 $break-progress-active: #4caf50;
 
 $clock-face-fill: #fafafa;
-$clock-face-stroke: #ddd;
+// $clock-face-stroke: #ddd;
 $clock-face-stroke-width: 4;
 
-$tick-minor-stroke: #b7b6b6;
+$tick-minor-stroke: #0f0802;
 $tick-minor-width: 1;
-$tick-major-stroke: #999;
-$tick-major-width: 2;
+$tick-major-stroke: #0f0802;
+$tick-major-width: 1.5;
 
-$second-hand-stroke: #cc5555;
+// $second-hand-stroke: #cc5555;
+$second-hand-stroke: #0f0802;
 $second-hand-width: 3;
 $second-hand-transition: 0.1s linear;
 
-$center-dot-fill: #ff6b6b;
-$center-dot-stroke: #fff;
+$center-dot-fill: var(--interactive-accent);
+$center-dot-fill-break: #4caf50;
+$center-dot-stroke: #0f0802;
 $center-dot-stroke-width: 2;
 
 $btn-text-color: white;

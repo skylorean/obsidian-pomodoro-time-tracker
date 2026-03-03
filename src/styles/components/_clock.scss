@@ -1,9 +1,8 @@
 @use "../variables" as *;
 
 .pomodoro-clock-face {
-	fill: $clock-face-fill;
-	stroke: $clock-face-stroke;
-	stroke-width: $clock-face-stroke-width;
+	fill: none;
+	stroke: none;
 }
 
 .pomodoro-tick-minor {
@@ -32,4 +31,8 @@
 	fill: $center-dot-fill;
 	stroke: $center-dot-stroke;
 	stroke-width: $center-dot-stroke-width;
+
+	&.break-mode {
+		fill: $center-dot-fill-break;
+	}
 }

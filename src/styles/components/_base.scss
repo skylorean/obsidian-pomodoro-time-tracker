@@ -8,13 +8,18 @@
 	padding: 2rem;
 	height: 100%;
 	color: var(--text-normal);
+	container-type: inline-size;
 }
 
 .pomodoro-clock-container {
 	position: relative;
+	width: clamp(120px, 80cqw, 250px);
+	aspect-ratio: 1;
 }
 
 .pomodoro-clock-svg {
+	width: 100%;
+	height: 100%;
 	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
 }
 

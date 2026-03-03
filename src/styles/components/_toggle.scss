@@ -3,7 +3,7 @@
 .pomodoro-mode-toggle {
 	display: flex;
 	gap: 0;
-	margin-bottom: 1.5rem;
+	margin-bottom: clamp(0.8rem, 8cqw, 1.5rem);
 	border-radius: 8px;
 	overflow: hidden;
 	border: 1px solid var(--background-modifier-border);
@@ -11,13 +11,13 @@
 
 .pomodoro-toggle-btn {
 	flex: 1;
-	padding: 0.5rem 3rem;
+	padding: clamp(0.3rem, 3cqw, 0.5rem) clamp(1rem, 10cqw, 3rem);
 	border: none;
 	background: var(--background-secondary);
 	color: var(--text-muted);
 	cursor: pointer;
 	transition: all 0.2s;
-	font-size: 0.9rem;
+	font-size: clamp(0.7rem, 5cqw, 0.9rem);
 	font-weight: 500;
 
 	&:first-child {

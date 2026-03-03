@@ -9,8 +9,8 @@
 	border: 1px solid rgba(0, 0, 0, 0.5);
 	border-radius: $border-radius-sm;
 	background-color: rgba(0, 0, 0, 0.3);
-	padding: 0.25rem 2rem;
-	font-size: 1.5rem;
+	padding: clamp(0.15rem, 2cqw, 0.25rem) clamp(0.8rem, 10cqw, 2rem);
+	font-size: clamp(0.7rem, 8cqw, 1.5rem);
 	font-weight: bold;
 	font-variant-numeric: tabular-nums;
 	user-select: none;
