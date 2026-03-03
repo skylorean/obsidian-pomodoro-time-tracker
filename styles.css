@@ -44,6 +44,11 @@ If your plugin does not need CSS, delete this file.
 	stroke-width: 4;
 }
 
+/* Progress Arc - shows remaining time */
+.pomodoro-progress-arc {
+	fill: rgba(255, 140, 0, 0.35);
+}
+
 /* Tick Marks - Minor */
 .pomodoro-tick-minor {
 	stroke: #b7b6b6;

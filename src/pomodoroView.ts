@@ -10,6 +10,7 @@ export class PomodoroView extends ItemView {
 	private intervalId: number | null = null;
 	private isRunning: boolean = false;
 	private secondHand: SVGLineElement | null = null;
+	private progressPath: SVGPathElement | null = null;
 	private timeDisplay: HTMLElement | null = null;
 	private startBtn: HTMLElement | null = null;
 	private pauseBtn: HTMLElement | null = null;
@@ -48,7 +49,8 @@ export class PomodoroView extends ItemView {
 			this.initialSeconds = workDuration * 60;
 
 			if (restoreResult.error === "Timer expired while away") {
-				this.expiredNotice = "Your previous Pomodoro session completed while you were away!";
+				this.expiredNotice =
+					"Your previous Pomodoro session completed while you were away!";
 			}
 		}
 	}
@@ -100,6 +102,11 @@ export class PomodoroView extends ItemView {
 		clockFace.setAttribute("cx", this.centerX.toString());
 		clockFace.setAttribute("cy", this.centerY.toString());
 		clockFace.setAttribute("r", this.radius.toString());
+
+		// Progress arc overlay
+		this.progressPath = svg.createSvg("path");
+		this.progressPath.addClass("pomodoro-progress-arc");
+		this.updateProgressArc();
 
 		// Tick marks
 
@@ -276,5 +283,42 @@ export class PomodoroView extends ItemView {
 			"transform",
 			`rotate(${secondAngle} ${this.centerX} ${this.centerY})`,
 		);
+
+		this.updateProgressArc();
+	}
+
+	private updateProgressArc() {
+		if (!this.progressPath) return;
+		const ratio = this.timerSeconds / this.initialSeconds;
+		this.progressPath.setAttribute("d", this.createProgressArcPath(ratio));
+	}
+
+	private createProgressArcPath(ratio: number): string {
+		const radius = this.radius - 3;
+
+		if (ratio <= 0) {
+			return "";
+		}
+
+		if (ratio >= 1) {
+			// Full circle - two semicircles
+			return `M ${this.centerX} ${this.centerY}
+				L ${this.centerX} ${this.centerY - radius}
+				A ${radius} ${radius} 0 1 1 ${this.centerX} ${this.centerY + radius}
+				A ${radius} ${radius} 0 1 1 ${this.centerX} ${this.centerY - radius}
+				Z`;
+		}
+
+		const endAngle = ratio * 360;
+		const endRad = (endAngle * Math.PI) / 180;
+		const endX = this.centerX + radius * Math.sin(endRad);
+		const endY = this.centerY - radius * Math.cos(endRad);
+
+		const largeArcFlag = endAngle > 180 ? 1 : 0;
+
+		return `M ${this.centerX} ${this.centerY}
+			L ${this.centerX} ${this.centerY - radius}
+			A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}
+			Z`;
 	}
 }
