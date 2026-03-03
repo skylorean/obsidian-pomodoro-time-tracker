@@ -1,4 +1,9 @@
 /**
+ * Timer mode - work or break
+ */
+export type TimerMode = 'work' | 'break';
+
+/**
  * Represents the current state of the timer for persistence purposes
  */
 export interface TimerState {
@@ -10,21 +15,38 @@ export interface TimerState {
 	isRunning: boolean;
 	/** Unix timestamp (milliseconds) when this state was saved */
 	savedAt: number;
+	/** Current timer mode */
+	mode: TimerMode;
+}
+
+/**
+ * Result of attempting to restore timer state (success case)
+ */
+export interface RestoreSuccess {
+	/** Whether restoration was successful */
+	success: true;
+	/** The restored state */
+	state: TimerState;
+	/** Number of seconds that elapsed since last save */
+	elapsedSeconds: number;
+}
+
+/**
+ * Result of attempting to restore timer state (failure case)
+ */
+export interface RestoreFailure {
+	/** Whether restoration was successful */
+	success: false;
+	/** Number of seconds that elapsed since last save */
+	elapsedSeconds?: number;
+	/** Reason for failure */
+	error?: string;
 }
 
 /**
  * Result of attempting to restore timer state
  */
-export interface RestoreResult {
-	/** Whether restoration was successful */
-	success: boolean;
-	/** The restored state, if successful */
-	state?: TimerState;
-	/** Number of seconds that elapsed since last save */
-	elapsedSeconds?: number;
-	/** Reason for failure, if unsuccessful */
-	error?: string;
-}
+export type RestoreResult = RestoreSuccess | RestoreFailure;
 
 /**
  * Result type for storage operations

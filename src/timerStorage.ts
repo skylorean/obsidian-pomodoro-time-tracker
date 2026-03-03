@@ -70,7 +70,7 @@ export class TimerStorage {
 				};
 			}
 
-			const state: TimerState = rawData;
+			const state = this.normalizeState(rawData);
 			const elapsedSeconds = this.calculateElapsedSeconds(state.savedAt);
 
 			// Check if state is too old
@@ -102,11 +102,11 @@ export class TimerStorage {
 
 				return {
 					success: true,
-					state: {
+					state: this.normalizeState({
 						...state,
 						timerSeconds: adjustedSeconds,
 						isRunning: false, // Don't auto-start; user must resume
-					},
+					}),
 					elapsedSeconds,
 				};
 			}
@@ -114,7 +114,7 @@ export class TimerStorage {
 			// Timer was paused - restore as-is
 			return {
 				success: true,
-				state,
+				state: this.normalizeState(state),
 				elapsedSeconds: 0,
 			};
 		} catch (error) {
@@ -141,9 +141,9 @@ export class TimerStorage {
 	}
 
 	/**
-	 * Type guard to validate TimerState structure
+	 * Type guard to validate TimerState structure (mode is optional for backward compatibility)
 	 */
-	private isValidState(value: unknown): value is TimerState {
+	private isValidState(value: unknown): value is Partial<TimerState> & { timerSeconds: number; initialSeconds: number; isRunning: boolean; savedAt: number } {
 		if (typeof value !== "object" || value === null) {
 			return false;
 		}
@@ -159,6 +159,29 @@ export class TimerStorage {
 			obj.initialSeconds > 0 &&
 			obj.savedAt > 0
 		);
+	}
+
+	/**
+	 * Normalizes state by adding default mode if missing (backward compatibility)
+	 */
+	private normalizeState(state: Partial<TimerState> & { timerSeconds: number; initialSeconds: number; isRunning: boolean; savedAt: number }): TimerState {
+		return {
+			timerSeconds: state.timerSeconds,
+			initialSeconds: state.initialSeconds,
+			isRunning: state.isRunning,
+			savedAt: state.savedAt,
+			mode: state.mode ?? 'work',
+		};
+	}
+
+	/**
+	 * Creates a normalized state with updated values
+	 */
+	private createNormalizedState(base: TimerState, updates: Partial<TimerState>): TimerState {
+		return {
+			...base,
+			...updates,
+		};
 	}
 
 	/**

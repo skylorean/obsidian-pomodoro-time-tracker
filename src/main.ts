@@ -15,7 +15,7 @@ export default class PomodoroTimerPlugin extends Plugin {
 		// Register the custom view
 		this.registerView(
 			VIEW_TYPE_POMODORO,
-			(leaf) => new PomodoroView(leaf, this.settings.workDuration),
+			(leaf) => new PomodoroView(leaf, this.settings.workDuration, this.settings.breakDuration),
 		);
 
 		// Add ribbon icon to open timer
