@@ -22,6 +22,10 @@
 	transition: transform $second-hand-transition;
 	position: relative;
 	z-index: 10;
+
+	&.no-transition {
+		transition: none;
+	}
 }
 
 .pomodoro-center-dot {

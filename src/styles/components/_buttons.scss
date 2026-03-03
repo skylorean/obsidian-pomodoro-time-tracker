@@ -2,6 +2,7 @@
 
 .pomodoro-controls {
 	display: flex;
+	flex-direction: column;
 	gap: $spacing-lg;
 	margin-top: $spacing-sm;
 }
@@ -26,6 +27,7 @@
 }
 
 .pomodoro-btn-start {
+	padding: 1rem 6rem;
 	background-color: $btn-start-bg;
 	color: $btn-text-color;
 
@@ -35,6 +37,7 @@
 }
 
 .pomodoro-btn-pause {
+	padding: 1rem 6rem;
 	background-color: $btn-pause-bg;
 	color: $btn-text-color;
 
@@ -43,7 +46,8 @@
 	}
 }
 
-.pomodoro-btn-reset {
+.pomodoro-btn-end-session {
+	align-self: center;
 	background-color: $btn-reset-bg;
 	color: $btn-text-color;
 

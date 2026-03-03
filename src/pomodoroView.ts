@@ -14,7 +14,7 @@ export class PomodoroView extends ItemView {
 	private timeDisplay: HTMLElement | null = null;
 	private startBtn: HTMLElement | null = null;
 	private pauseBtn: HTMLElement | null = null;
-	private resetBtn: HTMLElement | null = null;
+	private endSessionBtn: HTMLElement | null = null;
 	private workBtn: HTMLElement | null = null;
 	private breakBtn: HTMLElement | null = null;
 	private mode: TimerMode = "work";
@@ -191,14 +191,15 @@ export class PomodoroView extends ItemView {
 			text: "Pause",
 		});
 		this.pauseBtn.addEventListener("click", () => this.pauseTimer());
-		this.pauseBtn.style.display = "none";
+		this.pauseBtn.setCssProps({ display: "none" });
 
-		// Reset button
-		this.resetBtn = controls.createEl("button", {
-			cls: "pomodoro-btn pomodoro-btn-reset",
-			text: "Reset",
+		// End session button
+		this.endSessionBtn = controls.createEl("button", {
+			cls: "pomodoro-btn pomodoro-btn-end-session",
+			text: "End session",
 		});
-		this.resetBtn.addEventListener("click", () => this.resetTimer());
+		this.endSessionBtn.addEventListener("click", () => this.endSession());
+		this.endSessionBtn.setCssProps({ visibility: "hidden", opacity: "0" });
 	}
 
 	private renderTickMarks(svg: SVGSVGElement) {
@@ -235,8 +236,16 @@ export class PomodoroView extends ItemView {
 
 		this.isRunning = true;
 		this.wasRestoredFromPause = false;
-		if (this.startBtn) this.startBtn.style.display = "none";
-		if (this.pauseBtn) this.pauseBtn.style.display = "inline-block";
+		if (this.startBtn) this.startBtn.setCssProps({ display: "none" });
+		if (this.pauseBtn) this.pauseBtn.setCssProps({ display: "flex" });
+		if (this.endSessionBtn)
+			this.endSessionBtn.setCssProps({
+				visibility: "visible",
+				opacity: "1",
+			});
+
+		// Reset hand position instantly before starting
+		// this.resetClockHandsInstantly();
 
 		const currentMode = this.mode === "work" ? "Work" : "Break";
 
@@ -247,7 +256,8 @@ export class PomodoroView extends ItemView {
 				this.updateClockHands();
 				this.saveState();
 			} else {
-				const nextMode: TimerMode = this.mode === "work" ? "break" : "work";
+				const nextMode: TimerMode =
+					this.mode === "work" ? "break" : "work";
 				this.stopTimer();
 				this.storage.clear();
 				new Notice(
@@ -264,10 +274,10 @@ export class PomodoroView extends ItemView {
 		this.stopTimer();
 		this.saveState();
 		if (this.startBtn) {
-			this.startBtn.style.display = "inline-block";
+			this.startBtn.setCssProps({ display: "flex" });
 			this.startBtn.textContent = "Resume";
 		}
-		if (this.pauseBtn) this.pauseBtn.style.display = "none";
+		if (this.pauseBtn) this.pauseBtn.setCssProps({ display: "none" });
 	}
 
 	private stopTimer() {
@@ -278,18 +288,10 @@ export class PomodoroView extends ItemView {
 		this.isRunning = false;
 	}
 
-	private resetTimer() {
+	private endSession() {
+		const nextMode: TimerMode = this.mode === "work" ? "break" : "work";
 		this.stopTimer();
-		this.timerSeconds = this.initialSeconds;
-		this.wasRestoredFromPause = false;
-		this.updateTimeDisplay();
-		this.updateClockHands();
-		this.storage.clear();
-		if (this.startBtn) {
-			this.startBtn.style.display = "inline-block";
-			this.startBtn.textContent = "Start";
-		}
-		if (this.pauseBtn) this.pauseBtn.style.display = "none";
+		this.switchMode(nextMode);
 	}
 
 	/**
@@ -317,15 +319,38 @@ export class PomodoroView extends ItemView {
 		if (!this.secondHand) return;
 
 		const currentSecond = this.timerSeconds % 60;
+		const finalCurrentSecond = currentSecond === 0 ? 60 : currentSecond;
 
-		// Second hand - clockwise (shows current second)
-		const secondAngle = currentSecond * 6;
+		const secondAngle = finalCurrentSecond * 6;
 		this.secondHand.setAttribute(
 			"transform",
 			`rotate(${secondAngle} ${this.centerX} ${this.centerY})`,
 		);
 
 		this.updateProgressArc();
+	}
+
+	/**
+	 * Reset clock hands instantly without animation
+	 * Used when switching modes to avoid "rewind" effect
+	 */
+	private resetClockHandsInstantly() {
+		if (!this.secondHand) return;
+
+		// Disable transition via CSS class
+		this.secondHand.addClass("no-transition");
+
+		// Wait for next frame to ensure transition is disabled
+		requestAnimationFrame(() => {
+			this.updateClockHands();
+
+			// Wait another frame before re-enabling transition
+			requestAnimationFrame(() => {
+				if (this.secondHand) {
+					this.secondHand.removeClass("no-transition");
+				}
+			});
+		});
 	}
 
 	private updateProgressArc() {
@@ -376,10 +401,16 @@ export class PomodoroView extends ItemView {
 		this.storage.clear();
 
 		// Reset button visibility
-		if (this.startBtn) this.startBtn.style.display = "inline-block";
-		if (this.pauseBtn) this.pauseBtn.style.display = "none";
+		if (this.startBtn) this.startBtn.setCssProps({ display: "flex" });
+		if (this.pauseBtn) this.pauseBtn.setCssProps({ display: "none" });
+		if (this.endSessionBtn)
+			this.endSessionBtn.setCssProps({
+				visibility: "hidden",
+				opacity: "0",
+			});
 
 		this.updateTimeDisplay();
+		// this.resetClockHandsInstantly();
 		this.updateClockHands();
 		this.updateProgressArcColor();
 		this.updateToggleButton();
