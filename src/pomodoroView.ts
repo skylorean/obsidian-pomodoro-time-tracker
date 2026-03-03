@@ -244,9 +244,6 @@ export class PomodoroView extends ItemView {
 				opacity: "1",
 			});
 
-		// Reset hand position instantly before starting
-		// this.resetClockHandsInstantly();
-
 		const currentMode = this.mode === "work" ? "Work" : "Break";
 
 		this.intervalId = window.setInterval(() => {
@@ -330,29 +327,6 @@ export class PomodoroView extends ItemView {
 		this.updateProgressArc();
 	}
 
-	/**
-	 * Reset clock hands instantly without animation
-	 * Used when switching modes to avoid "rewind" effect
-	 */
-	private resetClockHandsInstantly() {
-		if (!this.secondHand) return;
-
-		// Disable transition via CSS class
-		this.secondHand.addClass("no-transition");
-
-		// Wait for next frame to ensure transition is disabled
-		requestAnimationFrame(() => {
-			this.updateClockHands();
-
-			// Wait another frame before re-enabling transition
-			requestAnimationFrame(() => {
-				if (this.secondHand) {
-					this.secondHand.removeClass("no-transition");
-				}
-			});
-		});
-	}
-
 	private updateProgressArc() {
 		if (!this.progressPath) return;
 		const ratio = this.timerSeconds / this.initialSeconds;
@@ -410,7 +384,6 @@ export class PomodoroView extends ItemView {
 			});
 
 		this.updateTimeDisplay();
-		// this.resetClockHandsInstantly();
 		this.updateClockHands();
 		this.updateProgressArcColor();
 		this.updateToggleButton();
