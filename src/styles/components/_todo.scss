@@ -1,0 +1,211 @@
+@use "../variables" as *;
+
+// Container
+.pomodoro-todo-container {
+	margin-top: $spacing-lg;
+	padding-top: $spacing-lg;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+// Header
+.pomodoro-todo-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: $spacing-sm;
+}
+
+.pomodoro-todo-title {
+	font-size: 0.9rem;
+	font-weight: $font-weight-medium;
+	color: var(--text-muted);
+}
+
+.pomodoro-todo-add-btn {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	font-size: 1.2rem;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all $transition-fast;
+
+	&:hover {
+		background: var(--interactive-accent);
+		color: var(--text-on-accent);
+	}
+}
+
+// Input
+.pomodoro-todo-input-container {
+	margin-bottom: $spacing-sm;
+	transition: all $transition-fast;
+
+	&.hidden {
+		display: none;
+	}
+}
+
+.pomodoro-todo-input {
+	width: 100%;
+	padding: $spacing-sm;
+	border-radius: $border-radius-sm;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 0.85rem;
+
+	&::placeholder {
+		color: var(--text-faint);
+	}
+
+	&:focus {
+		outline: none;
+		border-color: var(--interactive-accent);
+	}
+}
+
+// Task list
+.pomodoro-todo-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+// Empty state
+.pomodoro-todo-empty {
+	text-align: center;
+	color: var(--text-faint);
+	font-size: 0.85rem;
+	padding: $spacing-lg;
+}
+
+// Individual task
+.pomodoro-todo-task {
+	display: flex;
+	align-items: center;
+	gap: $spacing-sm;
+	padding: $spacing-sm;
+	border-radius: $border-radius-sm;
+	background: var(--background-secondary);
+	transition: all $transition-fast;
+
+	&:hover {
+		background: var(--background-modifier-hover);
+
+		.pomodoro-todo-delete-btn {
+			opacity: 1;
+		}
+	}
+
+	&.current {
+		border-left: 3px solid var(--interactive-accent);
+		background: color-mix(
+			in srgb,
+			var(--interactive-accent) 10%,
+			var(--background-secondary)
+		);
+	}
+
+	&.completed {
+		opacity: 0.6;
+
+		.pomodoro-todo-text {
+			text-decoration: line-through;
+			color: var(--text-muted);
+		}
+	}
+
+	&.dragging {
+		opacity: 0.5;
+	}
+
+	&.drag-over {
+		border-top: 2px solid var(--interactive-accent);
+	}
+}
+
+// Drag handle
+.pomodoro-todo-drag-handle {
+	cursor: grab;
+	color: var(--text-faint);
+	font-size: 0.8rem;
+	user-select: none;
+	flex-shrink: 0;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+// Checkbox
+.pomodoro-todo-checkbox {
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	accent-color: var(--interactive-accent);
+	flex-shrink: 0;
+}
+
+// Task text
+.pomodoro-todo-text {
+	flex: 1;
+	font-size: 0.85rem;
+	word-break: break-word;
+	min-width: 0;
+}
+
+// Wiki-link styling
+.pomodoro-todo-wikilink {
+	color: var(--link-color);
+	text-decoration: none;
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+		color: var(--link-color-hover);
+	}
+}
+
+// Delete button
+.pomodoro-todo-delete-btn {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: none;
+	background: transparent;
+	color: var(--text-faint);
+	font-size: 0.9rem;
+	cursor: pointer;
+	opacity: 0;
+	transition: all $transition-fast;
+	flex-shrink: 0;
+
+	&:hover {
+		background: var(--background-modifier-error);
+		color: var(--text-on-accent);
+	}
+}
+
+// Edit input (inline editing)
+.pomodoro-todo-edit-input {
+	width: 100%;
+	border: 1px solid var(--interactive-accent);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 0.85rem;
+	padding: 2px 4px;
+	border-radius: 2px;
+
+	&:focus {
+		outline: none;
+		border-color: var(--interactive-accent);
+	}
+}

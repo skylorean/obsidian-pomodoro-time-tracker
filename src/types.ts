@@ -56,3 +56,51 @@ export interface StorageResult<T> {
 	data?: T;
 	error?: string;
 }
+
+/**
+ * Represents a single todo task
+ */
+export interface TodoTask {
+	/** Unique identifier for the task */
+	id: string;
+	/** Task text content (may contain wiki-links like [[filename]]) */
+	text: string;
+	/** Whether the task is completed */
+	completed: boolean;
+	/** Unix timestamp when task was created */
+	createdAt: number;
+	/** Order index for sorting (lower = higher in list) */
+	order: number;
+}
+
+/**
+ * State for the todo list persistence
+ */
+export interface TodoListState {
+	/** Array of all tasks */
+	tasks: TodoTask[];
+	/** Unix timestamp when state was last saved */
+	savedAt: number;
+	/** Schema version for future migrations */
+	version: number;
+}
+
+/**
+ * Text segment in parsed task text
+ */
+export type TextSegment = { type: 'text'; content: string };
+
+/**
+ * Wiki-link segment in parsed task text
+ */
+export type WikiLinkSegment = { type: 'wikilink'; path: string; displayText?: string };
+
+/**
+ * Result of parsing task text for wiki-links
+ */
+export interface ParsedTaskText {
+	/** Array of text and wiki-link segments */
+	segments: Array<TextSegment | WikiLinkSegment>;
+	/** Whether the task contains any wiki-links */
+	hasWikiLinks: boolean;
+}
