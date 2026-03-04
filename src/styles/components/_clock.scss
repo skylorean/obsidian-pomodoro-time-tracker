@@ -18,13 +18,8 @@
 .pomodoro-second-hand {
 	stroke: $second-hand-stroke;
 	stroke-width: $second-hand-width;
-	transition: transform $second-hand-transition;
 	position: relative;
 	z-index: 10;
-
-	&.no-transition {
-		transition: none;
-	}
 }
 
 .pomodoro-center-dot {

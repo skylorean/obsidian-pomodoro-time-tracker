@@ -160,7 +160,7 @@ export class PomodoroView extends ItemView {
 		this.secondHand.setAttribute("x1", this.centerX.toString());
 		this.secondHand.setAttribute("y1", this.centerY.toString());
 		this.secondHand.setAttribute("x2", this.centerX.toString());
-		this.secondHand.setAttribute("y2", "23"); // Length = 77px from center
+		this.secondHand.setAttribute("y2", "27");
 		this.secondHand.setAttribute("stroke-linecap", "round");
 
 		// Center dot
@@ -316,13 +316,11 @@ export class PomodoroView extends ItemView {
 		this.timeDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 	}
 
-	private updateClockHands() {
+	private updateClockHands(modeUpdated: boolean = false) {
 		if (!this.secondHand) return;
 
 		const currentSecond = this.timerSeconds % 60;
-		const finalCurrentSecond = currentSecond === 0 ? 60 : currentSecond;
-
-		const secondAngle = finalCurrentSecond * 6;
+		const secondAngle = currentSecond * 6;
 		this.secondHand.setAttribute(
 			"transform",
 			`rotate(${secondAngle} ${this.centerX} ${this.centerY})`,
@@ -388,7 +386,7 @@ export class PomodoroView extends ItemView {
 			});
 
 		this.updateTimeDisplay();
-		this.updateClockHands();
+		this.updateClockHands(true);
 		this.updateProgressArcColor();
 		this.updateCenterDotColor();
 		this.updateToggleButton();
