@@ -10,7 +10,6 @@ export const VIEW_TYPE_POMODORO = "pomodoro-timer";
 export class PomodoroView extends ItemView {
 	private timerSeconds: number;
 	private initialSeconds: number;
-	private intervalId: number | null = null;
 	private isRunning: boolean = false;
 	private secondHand: SVGLineElement | null = null;
 	private centerDot: SVGCircleElement | null = null;
@@ -23,6 +22,8 @@ export class PomodoroView extends ItemView {
 	private breakBtn: HTMLElement | null = null;
 	private mode: TimerMode = "work";
 	private breakDuration: number;
+	private lastTickTimestamp: number | null = null;
+	private worker: Worker | null = null;
 
 	// Clock dimensions
 	private readonly centerX = 100;
@@ -263,6 +264,7 @@ export class PomodoroView extends ItemView {
 
 		this.isRunning = true;
 		this.wasRestoredFromPause = false;
+		this.lastTickTimestamp = Date.now();
 		if (this.startBtn) this.startBtn.setCssProps({ display: "none" });
 		if (this.pauseBtn) this.pauseBtn.setCssProps({ display: "flex" });
 		if (this.endSessionBtn)
@@ -271,31 +273,54 @@ export class PomodoroView extends ItemView {
 				opacity: "1",
 			});
 
-		const currentMode = this.mode === "work" ? "Work" : "Break";
+		// Create web worker for accurate timing (not throttled in background)
+		this.worker = this.createTimerWorker();
+		this.worker.onmessage = () => {
+			if (!this.isRunning) return;
 
-		this.intervalId = window.setInterval(() => {
 			if (this.timerSeconds > 0) {
 				this.timerSeconds--;
+				this.lastTickTimestamp = Date.now();
+
 				this.updateTimeDisplay();
 				this.updateClockHands();
 				this.saveState();
-			} else {
-				const nextMode: TimerMode =
-					this.mode === "work" ? "break" : "work";
-				this.stopTimer();
-				this.storage.clear();
-				new Notice(
-					`Pomodoro ${currentMode} session complete! Time for a ${nextMode} session.`,
-				);
-				this.switchMode(nextMode);
+
+				if (this.timerSeconds <= 0) {
+					const nextMode: TimerMode =
+						this.mode === "work" ? "break" : "work";
+					this.stopTimer();
+					this.storage.clear();
+					new Notice(
+						`Pomodoro ${this.mode === "work" ? "Work" : "Break"} session complete! Time for a ${nextMode} session.`,
+					);
+					this.switchMode(nextMode);
+				}
 			}
-		}, 1000);
+		};
+		this.worker.postMessage("start");
+	}
+
+	private createTimerWorker(): Worker {
+		const workerCode = `
+			let intervalId;
+			self.onmessage = function(e) {
+				if (e.data === 'start') {
+					intervalId = setInterval(() => self.postMessage('tick'), 1000);
+				} else if (e.data === 'stop') {
+					clearInterval(intervalId);
+				}
+			};
+		`;
+		const blob = new Blob([workerCode], { type: "application/javascript" });
+		return new Worker(URL.createObjectURL(blob));
 	}
 
 	private pauseTimer() {
 		if (!this.isRunning) return;
 
 		this.stopTimer();
+		this.lastTickTimestamp = null;
 		this.saveState();
 		if (this.startBtn) {
 			this.startBtn.setCssProps({ display: "flex" });
@@ -305,9 +330,10 @@ export class PomodoroView extends ItemView {
 	}
 
 	private stopTimer() {
-		if (this.intervalId !== null) {
-			window.clearInterval(this.intervalId);
-			this.intervalId = null;
+		if (this.worker) {
+			this.worker.postMessage("stop");
+			this.worker.terminate();
+			this.worker = null;
 		}
 		this.isRunning = false;
 	}
