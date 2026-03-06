@@ -5,17 +5,30 @@ import {
 	PomodoroSettingTab,
 } from "./settings";
 import { PomodoroView, VIEW_TYPE_POMODORO } from "./pomodoroView";
+import type { TodoTask } from "./types";
+
+interface PomodoroPluginData {
+	settings: PomodoroSettings;
+	tasks: TodoTask[];
+}
+
+const DEFAULT_DATA: PomodoroPluginData = {
+	settings: DEFAULT_SETTINGS,
+	tasks: [],
+};
 
 export default class PomodoroTimerPlugin extends Plugin {
 	settings: PomodoroSettings;
+	tasks: TodoTask[] = [];
 
 	async onload() {
-		await this.loadSettings();
+		await this.loadPluginData();
+		await this.migrateFromLocalStorage();
 
 		// Register the custom view
 		this.registerView(
 			VIEW_TYPE_POMODORO,
-			(leaf) => new PomodoroView(leaf, this.settings.workDuration, this.settings.breakDuration, this.settings),
+			(leaf) => new PomodoroView(leaf, this),
 		);
 
 		// Add ribbon icon to open timer
@@ -53,15 +66,48 @@ export default class PomodoroTimerPlugin extends Plugin {
 		// Cleanup is handled by Obsidian's plugin system
 	}
 
-	private async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<PomodoroSettings>,
-		);
+	private async loadPluginData() {
+		const data = (await this.loadData()) as Partial<PomodoroPluginData>;
+		this.settings = Object.assign({}, DEFAULT_DATA.settings, data?.settings);
+		this.tasks = data?.tasks || [];
+	}
+
+	public async savePluginData() {
+		await this.saveData({
+			settings: this.settings,
+			tasks: this.tasks,
+		});
 	}
 
 	public async saveSettings() {
-		await this.saveData(this.settings);
+		await this.savePluginData();
+	}
+
+	/**
+	 * Migrates existing tasks from localStorage to data.json (one-time migration)
+	 */
+	private async migrateFromLocalStorage() {
+		// Only migrate if we have no tasks and localStorage has data
+		if (this.tasks.length > 0) return;
+
+		try {
+			const oldData = this.app.loadLocalStorage(
+				"pomodoro-todo-list",
+			) as unknown;
+			if (oldData && typeof oldData === "object" && oldData !== null) {
+				const parsed = oldData as { tasks?: TodoTask[] };
+				if (Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
+					this.tasks = parsed.tasks;
+					await this.savePluginData();
+					// Clear old localStorage data
+					this.app.saveLocalStorage("pomodoro-todo-list", null);
+					console.log(
+						`[Pomodoro] Migrated ${this.tasks.length} tasks from localStorage to data.json`,
+					);
+				}
+			}
+		} catch (e) {
+			console.warn("[Pomodoro] Failed to migrate from localStorage:", e);
+		}
 	}
 }
