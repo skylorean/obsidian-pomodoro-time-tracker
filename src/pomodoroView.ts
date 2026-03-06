@@ -4,6 +4,7 @@ import { TodoStorage } from "./todoStorage";
 import { FileSuggestModal } from "./FileSuggestModal";
 import { parseWikiLinks } from "./wikiLinkParser";
 import type { TimerState, TimerMode, TodoTask } from "./types";
+import type { PomodoroSettings } from "./settings";
 
 export const VIEW_TYPE_POMODORO = "pomodoro-timer";
 
@@ -24,6 +25,8 @@ export class PomodoroView extends ItemView {
 	private breakDuration: number;
 	private lastTickTimestamp: number | null = null;
 	private worker: Worker | null = null;
+	private settings: PomodoroSettings;
+	private audio: HTMLAudioElement | null = null;
 
 	// Clock dimensions
 	private readonly centerX = 100;
@@ -50,10 +53,12 @@ export class PomodoroView extends ItemView {
 		leaf: WorkspaceLeaf,
 		private workDuration: number,
 		breakDuration: number,
+		settings: PomodoroSettings,
 	) {
 		super(leaf);
 
 		this.breakDuration = breakDuration;
+		this.settings = settings;
 
 		// Initialize storage with app instance
 		this.storage = new TimerStorage(this.app);
@@ -294,6 +299,7 @@ export class PomodoroView extends ItemView {
 					new Notice(
 						`Pomodoro ${this.mode === "work" ? "Work" : "Break"} session complete! Time for a ${nextMode} session.`,
 					);
+					void this.playAlarmSound();
 					this.switchMode(nextMode);
 				}
 			}
@@ -475,6 +481,39 @@ export class PomodoroView extends ItemView {
 		}
 	}
 
+	// ==================== Audio Methods ====================
+
+	private async loadAudio(): Promise<void> {
+		if (this.audio) return;
+
+		try {
+			const audioPath = `${this.app.vault.configDir}/plugins/obsidian-pomodoro-time-tracker/assets/alarm.mp3`;
+			const data = await this.app.vault.adapter.readBinary(audioPath);
+			const blob = new Blob([data], { type: "audio/mpeg" });
+			const audioUrl = URL.createObjectURL(blob);
+			this.audio = new Audio(audioUrl);
+			this.audio.volume = this.settings.soundVolume / 100;
+		} catch (e) {
+			console.warn("Failed to load audio file:", e);
+		}
+	}
+
+	private async playAlarmSound(): Promise<void> {
+		if (!this.settings.soundEnabled) return;
+
+		if (!this.audio) {
+			await this.loadAudio();
+		}
+
+		if (this.audio) {
+			this.audio.currentTime = 0;
+			this.audio.volume = this.settings.soundVolume / 100;
+			this.audio.play().catch((e) => {
+				console.warn("Failed to play alarm sound:", e);
+			});
+		}
+	}
+
 	// ==================== Todo List Methods ====================
 
 	/**
@@ -557,14 +596,12 @@ export class PomodoroView extends ItemView {
 		const sortedTasks = this.getSortedTasks();
 
 		// Find the first incomplete task index for highlighting
-		const firstIncompleteIndex = sortedTasks.findIndex(
-			(t) => !t.completed
-		);
+		const firstIncompleteIndex = sortedTasks.findIndex((t) => !t.completed);
 
 		sortedTasks.forEach((task, index) => {
 			const taskEl = this.createTaskElement(
 				task,
-				index === firstIncompleteIndex
+				index === firstIncompleteIndex,
 			);
 			this.todoListEl!.appendChild(taskEl);
 		});
@@ -588,7 +625,7 @@ export class PomodoroView extends ItemView {
 	 */
 	private createTaskElement(
 		task: TodoTask,
-		isCurrentTask: boolean
+		isCurrentTask: boolean,
 	): HTMLElement {
 		const taskEl = document.createElement("div");
 		taskEl.className =
@@ -610,7 +647,7 @@ export class PomodoroView extends ItemView {
 		checkbox.className = "pomodoro-todo-checkbox";
 		checkbox.checked = task.completed;
 		checkbox.addEventListener("change", () =>
-			this.toggleTaskCompletion(task.id)
+			this.toggleTaskCompletion(task.id),
 		);
 		taskEl.appendChild(checkbox);
 
@@ -840,7 +877,7 @@ export class PomodoroView extends ItemView {
 			const currentValue = this.todoInputEl?.value ?? "";
 			const newValue = currentValue.replace(
 				/\[\[$/,
-				`[[${file.basename}|${file.basename}]] `
+				`[[${file.basename}|${file.basename}]] `,
 			);
 			if (this.todoInputEl) {
 				this.todoInputEl.value = newValue;
@@ -859,7 +896,7 @@ export class PomodoroView extends ItemView {
 	private startEditTask(
 		taskId: string,
 		container: HTMLElement,
-		currentText: string
+		currentText: string,
 	): void {
 		this.isEditingTask = true;
 
@@ -933,7 +970,7 @@ export class PomodoroView extends ItemView {
 			const currentValue = input.value;
 			const newValue = currentValue.replace(
 				/\[\[$/,
-				`[[${file.basename}|${file.basename}]] `
+				`[[${file.basename}|${file.basename}]] `,
 			);
 			input.value = newValue;
 			input.focus();

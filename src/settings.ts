@@ -5,12 +5,16 @@ export interface PomodoroSettings {
 	workDuration: number;
 	breakDuration: number;
 	longBreakDuration: number;
+	soundEnabled: boolean;
+	soundVolume: number; // 0-100
 }
 
 export const DEFAULT_SETTINGS: PomodoroSettings = {
 	workDuration: 25,
 	breakDuration: 5,
 	longBreakDuration: 15,
+	soundEnabled: true,
+	soundVolume: 70,
 };
 
 export class PomodoroSettingTab extends PluginSettingTab {
@@ -73,6 +77,32 @@ export class PomodoroSettingTab extends PluginSettingTab {
 							this.plugin.settings.longBreakDuration = num;
 							await this.plugin.saveSettings();
 						}
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Sound notification")
+			.setDesc("Play sound when timer completes")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.soundEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.soundEnabled = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Sound volume")
+			.setDesc("Volume of the alarm sound (0-100)")
+			.addSlider((slider) =>
+				slider
+					.setLimits(0, 100, 5)
+					.setValue(this.plugin.settings.soundVolume)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.soundVolume = value;
+						await this.plugin.saveSettings();
 					}),
 			);
 	}

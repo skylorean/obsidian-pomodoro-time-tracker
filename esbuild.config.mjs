@@ -2,6 +2,8 @@ import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from 'node:module';
 import { sassPlugin } from 'esbuild-sass-plugin';
+import { copyFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { join } from 'path';
 
 const banner =
 `/*
@@ -68,11 +70,27 @@ const cssContext = await esbuild.context({
 	minify: prod,
 });
 
+// Copy assets to output directory after build
+function copyAssets() {
+	const assetsDir = join(process.cwd(), 'assets');
+	if (existsSync(assetsDir)) {
+		const files = readdirSync(assetsDir);
+		for (const file of files) {
+			const src = join(assetsDir, file);
+			const dest = join(process.cwd(), file);
+			copyFileSync(src, dest);
+		}
+	}
+}
+
 if (prod) {
 	await context.rebuild();
 	await cssContext.rebuild();
+	copyAssets();
 	process.exit(0);
 } else {
 	await context.watch();
 	await cssContext.watch();
+	// Copy assets initially
+	copyAssets();
 }
