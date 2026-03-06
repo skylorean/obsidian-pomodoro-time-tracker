@@ -9,7 +9,7 @@ const TODO_STORAGE_KEY = "pomodoro-todo-list";
 /**
  * Schema version for future migrations
  */
-const TODO_SCHEMA_VERSION = 1;
+const TODO_SCHEMA_VERSION = 2;
 
 /**
  * Maximum acceptable age for saved state (30 days in milliseconds)
@@ -138,7 +138,14 @@ export class TodoStorage {
 	 * Handles schema migrations if needed
 	 */
 	private migrateIfNeeded(state: TodoListState): TodoTask[] {
-		// Future migration logic would go here based on state.version
+		// Migration from v1 to v2: add description field
+		if (state.version < 2) {
+			for (const task of state.tasks) {
+				if (task.description === undefined) {
+					task.description = "";
+				}
+			}
+		}
 		return state.tasks;
 	}
 }

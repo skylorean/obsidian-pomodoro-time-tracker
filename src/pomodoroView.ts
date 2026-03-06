@@ -194,7 +194,7 @@ export class PomodoroView extends ItemView {
 		this.centerDot.addClass("pomodoro-center-dot");
 		this.centerDot.setAttribute("cx", this.centerX.toString());
 		this.centerDot.setAttribute("cy", this.centerY.toString());
-		this.centerDot.setAttribute("r", "8");
+		this.centerDot.setAttribute("r", "4");
 
 		// Digital time display SECOND (renders after SVG in normal flow)
 		this.timeDisplay = clockContainer.createEl("div", {
@@ -202,6 +202,8 @@ export class PomodoroView extends ItemView {
 		});
 		this.updateTimeDisplay();
 		this.updateClockHands();
+		this.updateCenterDotColor();
+		this.updateProgressArcColor();
 
 		// Controls container
 		const controls = wrapper.createEl("div", {
@@ -292,15 +294,14 @@ export class PomodoroView extends ItemView {
 				this.saveState();
 
 				if (this.timerSeconds <= 0) {
-					const nextMode: TimerMode =
-						this.mode === "work" ? "break" : "work";
 					this.stopTimer();
 					this.storage.clear();
+					if (this.pauseBtn)
+						this.pauseBtn.setCssProps({ display: "none" });
 					new Notice(
-						`Pomodoro ${this.mode === "work" ? "Work" : "Break"} session complete! Time for a ${nextMode} session.`,
+						`Pomodoro ${this.mode === "work" ? "Work" : "Break"} session complete!`,
 					);
 					void this.playAlarmSound();
-					this.switchMode(nextMode);
 				}
 			}
 		};
@@ -345,6 +346,7 @@ export class PomodoroView extends ItemView {
 	}
 
 	private endSession() {
+		this.stopAlarmSound();
 		const nextMode: TimerMode = this.mode === "work" ? "break" : "work";
 		this.stopTimer();
 		this.switchMode(nextMode);
@@ -421,6 +423,8 @@ export class PomodoroView extends ItemView {
 
 	private switchMode(newMode: TimerMode) {
 		if (this.mode === newMode) return;
+
+		this.stopAlarmSound();
 
 		this.stopTimer();
 		this.mode = newMode;
@@ -506,11 +510,20 @@ export class PomodoroView extends ItemView {
 		}
 
 		if (this.audio) {
+			this.audio.loop = true;
 			this.audio.currentTime = 0;
 			this.audio.volume = this.settings.soundVolume / 100;
 			this.audio.play().catch((e) => {
 				console.warn("Failed to play alarm sound:", e);
 			});
+		}
+	}
+
+	private stopAlarmSound(): void {
+		if (this.audio) {
+			this.audio.pause();
+			this.audio.loop = false;
+			this.audio.currentTime = 0;
 		}
 	}
 
@@ -668,6 +681,16 @@ export class PomodoroView extends ItemView {
 		deleteBtn.addEventListener("click", () => this.deleteTask(task.id));
 		taskEl.appendChild(deleteBtn);
 
+		// Description textarea
+		const descriptionEl = document.createElement("textarea");
+		descriptionEl.className = "pomodoro-todo-description";
+		descriptionEl.placeholder = "Add description...";
+		descriptionEl.value = task.description || "";
+		descriptionEl.addEventListener("input", () => {
+			this.updateTaskDescription(task.id, descriptionEl.value);
+		});
+		taskEl.appendChild(descriptionEl);
+
 		// Drag and drop event handlers
 		this.attachDragHandlers(taskEl, task.id);
 
@@ -769,6 +792,17 @@ export class PomodoroView extends ItemView {
 			task.completed = !task.completed;
 			this.saveTodoState();
 			this.renderTasks();
+		}
+	}
+
+	/**
+	 * Updates task description
+	 */
+	private updateTaskDescription(taskId: string, description: string): void {
+		const task = this.tasks.find((t) => t.id === taskId);
+		if (task) {
+			task.description = description;
+			this.saveTodoState();
 		}
 	}
 

@@ -65,6 +65,8 @@ export interface TodoTask {
 	id: string;
 	/** Task text content (may contain wiki-links like [[filename]]) */
 	text: string;
+	/** Optional multi-line description */
+	description?: string;
 	/** Whether the task is completed */
 	completed: boolean;
 	/** Unix timestamp when task was created */

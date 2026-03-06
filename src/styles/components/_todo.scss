@@ -91,6 +91,7 @@
 // Individual task
 .pomodoro-todo-task {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: $spacing-sm;
 	padding: $spacing-sm;
@@ -204,6 +205,31 @@
 	font-size: 0.85rem;
 	padding: 2px 4px;
 	border-radius: 2px;
+
+	&:focus {
+		outline: none;
+		border-color: var(--interactive-accent);
+	}
+}
+
+// Description textarea
+.pomodoro-todo-description {
+	width: 100%;
+	min-height: 50px;
+	margin-top: 0.25rem;
+	padding: $spacing-sm;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: $border-radius-sm;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 0.8rem;
+	font-family: inherit;
+	resize: vertical;
+	flex-basis: 100%;
+
+	&::placeholder {
+		color: var(--text-faint);
+	}
 
 	&:focus {
 		outline: none;
