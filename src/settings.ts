@@ -30,7 +30,7 @@ export class PomodoroSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Pomodoro timer settings" });
+		new Setting(containerEl).setName("Pomodoro timer").setHeading();
 
 		new Setting(containerEl)
 			.setName("Work duration")

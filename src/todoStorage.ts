@@ -66,7 +66,7 @@ export class TodoStorage {
 				return { success: true, data: [] };
 			}
 
-			const state = rawData as TodoListState;
+			const state = rawData;
 
 			// Check if state is too old
 			if (this.isStateStale(state.savedAt)) {

@@ -101,7 +101,7 @@ export default class PomodoroTimerPlugin extends Plugin {
 					await this.savePluginData();
 					// Clear old localStorage data
 					this.app.saveLocalStorage("pomodoro-todo-list", null);
-					console.log(
+					console.debug(
 						`[Pomodoro] Migrated ${this.tasks.length} tasks from localStorage to data.json`,
 					);
 				}
