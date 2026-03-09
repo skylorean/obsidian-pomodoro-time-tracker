@@ -1,13 +1,11 @@
-// $work-progress-color: #f87d1d;
-$work-progress-color: color-mix(
-	in srgb,
-	var(--interactive-accent) 65%,
-	transparent
-);
+$work-progress-color: var(--pomodoro-work-color, #b395f8);
 $work-progress-active: #ff9800;
 
-$break-progress-color: color-mix(in srgb, #4caf50 90%, transparent);
-$break-progress-active: #4caf50;
+$break-progress-color: var(
+	--pomodoro-break-color,
+	color-mix(in srgb, #24ee45 90%, transparent)
+);
+$break-progress-active: #24ee45;
 
 $clock-face-fill: #fafafa;
 // $clock-face-stroke: #ddd;
@@ -22,8 +20,8 @@ $tick-major-width: 1.5;
 $second-hand-stroke: #0f0802;
 $second-hand-width: 2;
 
-$center-dot-fill: #b395f8;
-$center-dot-fill-break: #4caf50;
+$center-dot-fill: var(--pomodoro-work-color, #b395f8);
+$center-dot-fill-break: var(--pomodoro-break-color, #24ee45);
 $center-dot-stroke: #0f0802;
 $center-dot-stroke-width: 1.5;
 

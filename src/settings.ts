@@ -1,20 +1,30 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import PomodoroTimerPlugin from "./main";
 
+export type SoundChoice = 'alarm' | 'bell' | 'chime' | 'digital' | 'custom';
+
 export interface PomodoroSettings {
 	workDuration: number;
 	breakDuration: number;
-	longBreakDuration: number;
 	soundEnabled: boolean;
 	soundVolume: number; // 0-100
+	soundChoice: SoundChoice;
+	customSoundPath: string;
+	soundLoop: boolean;
+	workProgressColor: string; // hex or empty for theme default
+	breakProgressColor: string; // hex or empty for theme default
 }
 
 export const DEFAULT_SETTINGS: PomodoroSettings = {
 	workDuration: 25,
 	breakDuration: 5,
-	longBreakDuration: 15,
 	soundEnabled: true,
 	soundVolume: 70,
+	soundChoice: 'alarm',
+	customSoundPath: '',
+	soundLoop: true,
+	workProgressColor: '',
+	breakProgressColor: '',
 };
 
 export class PomodoroSettingTab extends PluginSettingTab {
@@ -30,7 +40,8 @@ export class PomodoroSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl).setName("Pomodoro timer").setHeading();
+		// ==================== Timer Settings ====================
+		new Setting(containerEl).setName("Timer").setHeading();
 
 		new Setting(containerEl)
 			.setName("Work duration")
@@ -49,8 +60,8 @@ export class PomodoroSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Short break duration")
-			.setDesc("Duration of short break in minutes")
+			.setName("Break duration")
+			.setDesc("Duration of break in minutes")
 			.addText((text) =>
 				text
 					.setPlaceholder("5")
@@ -64,21 +75,8 @@ export class PomodoroSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
-			.setName("Long break duration")
-			.setDesc("Duration of long break in minutes")
-			.addText((text) =>
-				text
-					.setPlaceholder("15")
-					.setValue(this.plugin.settings.longBreakDuration.toString())
-					.onChange(async (value) => {
-						const num = parseInt(value);
-						if (!isNaN(num) && num > 0) {
-							this.plugin.settings.longBreakDuration = num;
-							await this.plugin.saveSettings();
-						}
-					}),
-			);
+		// ==================== Sound Settings ====================
+		new Setting(containerEl).setName("Sound").setHeading();
 
 		new Setting(containerEl)
 			.setName("Sound notification")
@@ -103,6 +101,86 @@ export class PomodoroSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.soundVolume = value;
 						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Alarm sound")
+			.setDesc("Choose which sound to play when the timer ends")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("alarm", "Alarm")
+					.addOption("bell", "Bell")
+					.addOption("chime", "Chime")
+					.addOption("digital", "Digital")
+					.addOption("custom", "Custom file")
+					.setValue(this.plugin.settings.soundChoice)
+					.onChange(async (value) => {
+						this.plugin.settings.soundChoice = value as SoundChoice;
+						await this.plugin.saveSettings();
+						this.display();
+					}),
+			);
+
+		if (this.plugin.settings.soundChoice === 'custom') {
+			new Setting(containerEl)
+				.setName("Custom sound path")
+				.setDesc("Vault-relative path to a sound file (e.g. sounds/alarm.mp3)")
+				.addText((text) =>
+					text
+						.setPlaceholder("path/to/sound.mp3")
+						.setValue(this.plugin.settings.customSoundPath)
+						.onChange(async (value) => {
+							this.plugin.settings.customSoundPath = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+		}
+
+		new Setting(containerEl)
+			.setName("Loop sound")
+			.setDesc("Loop the alarm sound until manually stopped")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.soundLoop)
+					.onChange(async (value) => {
+						this.plugin.settings.soundLoop = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		// ==================== Appearance Settings ====================
+		new Setting(containerEl).setName("Appearance").setHeading();
+
+		new Setting(containerEl)
+			.setName("Work progress color")
+			.setDesc("Custom color for the work progress arc (leave empty for theme default)")
+			.addText((text) =>
+				text
+					.setPlaceholder("#e.g. #ff9800")
+					.setValue(this.plugin.settings.workProgressColor)
+					.onChange(async (value) => {
+						const trimmed = value.trim();
+						if (trimmed === '' || /^#[0-9a-fA-F]{3,8}$/.test(trimmed)) {
+							this.plugin.settings.workProgressColor = trimmed;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Break progress color")
+			.setDesc("Custom color for the break progress arc (leave empty for theme default)")
+			.addText((text) =>
+				text
+					.setPlaceholder("#e.g. #4caf50")
+					.setValue(this.plugin.settings.breakProgressColor)
+					.onChange(async (value) => {
+						const trimmed = value.trim();
+						if (trimmed === '' || /^#[0-9a-fA-F]{3,8}$/.test(trimmed)) {
+							this.plugin.settings.breakProgressColor = trimmed;
+							await this.plugin.saveSettings();
+						}
 					}),
 			);
 	}

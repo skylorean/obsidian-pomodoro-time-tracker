@@ -92,6 +92,7 @@ export class PomodoroView extends ItemView {
 
 	async onOpen() {
 		this.render();
+		this.applyCustomColors();
 
 		// Show notice if timer expired while away
 		if (this.expiredNotice) {
@@ -105,6 +106,21 @@ export class PomodoroView extends ItemView {
 		this.todoManager?.save();
 		this.todoManager?.destroy();
 		this.stopTimer();
+	}
+
+	/**
+	 * Called by the plugin when settings change so the view can react live.
+	 */
+	public onSettingsChanged(): void {
+		this.settings = this.plugin.settings;
+		this.workDuration = this.settings.workDuration;
+		this.breakDuration = this.settings.breakDuration;
+
+		// Clear cached audio so next play uses updated sound choice
+		this.clearCachedAudio();
+
+		// Reapply custom colors
+		this.applyCustomColors();
 	}
 
 	private render() {
@@ -285,18 +301,25 @@ export class PomodoroView extends ItemView {
 				this.saveState();
 
 				if (this.timerSeconds <= 0) {
-					this.stopTimer();
-					this.storage.clear();
-					if (this.pauseBtn)
-						this.pauseBtn.setCssProps({ display: "none" });
-					new Notice(
-						`Pomodoro ${this.mode === "work" ? "Work" : "Break"} session complete!`,
-					);
-					void this.playAlarmSound();
+					this.onTimerComplete();
 				}
 			}
 		};
 		this.worker.postMessage("start");
+	}
+
+	private onTimerComplete() {
+		this.stopTimer();
+		this.storage.clear();
+		if (this.pauseBtn)
+			this.pauseBtn.setCssProps({ display: "none" });
+
+		const wasWorkSession = this.mode === "work";
+
+		new Notice(
+			`Pomodoro ${wasWorkSession ? "Work" : "Break"} session complete!`,
+		);
+		void this.playAlarmSound();
 	}
 
 	private createTimerWorker(): Worker {
@@ -419,8 +442,10 @@ export class PomodoroView extends ItemView {
 
 		this.stopTimer();
 		this.mode = newMode;
-		this.timerSeconds =
-			(newMode === "work" ? this.workDuration : this.breakDuration) * 60;
+
+		const durationMinutes = newMode === "work" ? this.workDuration : this.breakDuration;
+
+		this.timerSeconds = durationMinutes * 60;
 		this.initialSeconds = this.timerSeconds;
 		this.wasRestoredFromPause = false;
 
@@ -476,20 +501,69 @@ export class PomodoroView extends ItemView {
 		}
 	}
 
+	// ==================== Custom Colors ====================
+
+	private applyCustomColors(): void {
+		const container = this.containerEl.children[1] as HTMLElement | undefined;
+		if (!container) return;
+
+		if (this.settings.workProgressColor) {
+			container.style.setProperty("--pomodoro-work-color", this.settings.workProgressColor);
+		} else {
+			container.style.removeProperty("--pomodoro-work-color");
+		}
+
+		if (this.settings.breakProgressColor) {
+			container.style.setProperty("--pomodoro-break-color", this.settings.breakProgressColor);
+		} else {
+			container.style.removeProperty("--pomodoro-break-color");
+		}
+	}
+
 	// ==================== Audio Methods ====================
+
+	private getAudioPath(): string {
+		if (this.settings.soundChoice === 'custom' && this.settings.customSoundPath) {
+			return this.settings.customSoundPath;
+		}
+		return `${this.app.vault.configDir}/plugins/obsidian-pomodoro-time-tracker/assets/${this.settings.soundChoice}.mp3`;
+	}
+
+	private getMimeType(path: string): string {
+		const ext = path.split('.').pop()?.toLowerCase();
+		switch (ext) {
+			case 'wav': return 'audio/wav';
+			case 'ogg': return 'audio/ogg';
+			case 'webm': return 'audio/webm';
+			default: return 'audio/mpeg';
+		}
+	}
 
 	private async loadAudio(): Promise<void> {
 		if (this.audio) return;
 
 		try {
-			const audioPath = `${this.app.vault.configDir}/plugins/obsidian-pomodoro-time-tracker/assets/alarm.mp3`;
-			const data = await this.app.vault.adapter.readBinary(audioPath);
-			const blob = new Blob([data], { type: "audio/mpeg" });
+			const audioPath = this.getAudioPath();
+			const isVaultRelative = this.settings.soundChoice === 'custom' && this.settings.customSoundPath;
+			const fullPath = isVaultRelative ? audioPath : audioPath;
+			const data = await this.app.vault.adapter.readBinary(fullPath);
+			const mimeType = this.getMimeType(fullPath);
+			const blob = new Blob([data], { type: mimeType });
 			const audioUrl = URL.createObjectURL(blob);
 			this.audio = new Audio(audioUrl);
 			this.audio.volume = this.settings.soundVolume / 100;
 		} catch (e) {
 			console.warn("Failed to load audio file:", e);
+		}
+	}
+
+	private clearCachedAudio(): void {
+		if (this.audio) {
+			this.audio.pause();
+			if (this.audio.src.startsWith("blob:")) {
+				URL.revokeObjectURL(this.audio.src);
+			}
+			this.audio = null;
 		}
 	}
 
@@ -501,7 +575,7 @@ export class PomodoroView extends ItemView {
 		}
 
 		if (this.audio) {
-			this.audio.loop = true;
+			this.audio.loop = this.settings.soundLoop;
 			this.audio.currentTime = 0;
 			this.audio.volume = this.settings.soundVolume / 100;
 			this.audio.play().catch((e) => {

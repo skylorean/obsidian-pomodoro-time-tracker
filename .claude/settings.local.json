@@ -8,7 +8,8 @@
       "Bash(npm run lint)",
       "mcp__zread__search_doc",
       "mcp__web-search-prime__webSearchPrime",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cp:*)"
     ]
   }
 }

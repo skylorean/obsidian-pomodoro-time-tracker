@@ -81,6 +81,17 @@ export default class PomodoroTimerPlugin extends Plugin {
 
 	public async saveSettings() {
 		await this.savePluginData();
+		this.notifyViewsOfSettingsChange();
+	}
+
+	private notifyViewsOfSettingsChange(): void {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_POMODORO);
+		for (const leaf of leaves) {
+			const view = leaf.view;
+			if (view instanceof PomodoroView) {
+				view.onSettingsChanged();
+			}
+		}
 	}
 
 	/**

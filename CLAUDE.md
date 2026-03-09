@@ -14,7 +14,8 @@ Supports Work and Break modes with automatic mode switching after timer completi
 **Additional Features:**
 - Integrated todo list with drag-and-drop reordering and inline editing
 - Wiki-link support in tasks (`[[filename]]` syntax with autocomplete)
-- Sound notifications when timer completes
+- Sound notifications when timer completes (multiple built-in sounds + custom file support)
+- Customizable progress arc colors via CSS custom properties
 
 ## Development Commands
 
@@ -44,6 +45,7 @@ npm version patch|minor|major
   - Adds ribbon icon and command to open the timer
   - `activateView()` pattern: reuses existing leaves of the same view type, otherwise creates new tab
   - Manages settings via `loadSettings()`/`saveSettings()`
+  - `saveSettings()` notifies open views via `view.onSettingsChanged()` for live updates
   - Passes settings to `PomodoroView` on construction
 
 ### View Architecture
@@ -52,15 +54,17 @@ npm version patch|minor|major
   - Handles the timer UI and logic
   - Uses SVG to render analog clock face with 60 tick marks, second hand, center dot, and progress arc
   - Clock dimensions: 200x200 viewBox, center at (100, 100), radius 93
-  - State: `timerSeconds`, `initialSeconds`, `isRunning`, `intervalId`, `mode` (TimerMode)
+  - State: `timerSeconds`, `initialSeconds`, `isRunning`, `mode` (TimerMode)
   - Supports Work/Break mode switching with toggle buttons
   - Integrates with `TimerStorage` for state persistence
   - Second hand shows current second within countdown (rotates clockwise, 0-59 seconds)
   - Tick marks positioned using trigonometry with -90° offset to start from 12 o'clock
   - Progress arc fills clockwise as time passes, different colors for work/break modes
   - **Todo list integration**: Renders and manages todo tasks below the timer
-  - **Sound playback**: Plays alarm.mp3 when timer completes (if enabled in settings)
+  - **Sound playback**: Configurable sound choice (alarm/bell/chime/digital/custom) with optional looping
   - **Web Worker**: Uses dedicated worker for accurate 1-second intervals (not throttled in background)
+  - **Custom colors**: `applyCustomColors()` sets `--pomodoro-work-color` / `--pomodoro-break-color` CSS custom properties on container
+  - **Live settings**: `onSettingsChanged()` public method — called by plugin when settings change (clears cached audio, reapplies colors)
 
 ### Timer State Persistence
 
@@ -120,19 +124,27 @@ npm version patch|minor|major
 
 ### Settings
 
-- **src/settings.ts**: `PomodoroSettings` interface and `PomodoroSettingTab`
-  - Configurable:
+- **src/settings.ts**: `PomodoroSettings` interface, `SoundChoice` type, and `PomodoroSettingTab`
+  - Settings tab organized into 3 sections: Timer, Sound, Appearance
+  - Conditional fields re-render on toggle change (calls `this.display()`)
+  - Timer settings:
     - `workDuration`: number (minutes, default: 25)
     - `breakDuration`: number (minutes, default: 5)
-    - `longBreakDuration`: number (minutes, default: 15)
+  - Sound settings:
     - `soundEnabled`: boolean (default: true)
     - `soundVolume`: number 0-100 (default: 70)
-  - Note: `PomodoroView` receives settings at construction - settings changes don't update the view until it's reopened
+    - `soundChoice`: SoundChoice = 'alarm' | 'bell' | 'chime' | 'digital' | 'custom'
+    - `customSoundPath`: string (vault-relative path, shown only when soundChoice is 'custom')
+    - `soundLoop`: boolean (default: true)
+  - Appearance settings:
+    - `workProgressColor`: hex string (default: '' = theme default)
+    - `breakProgressColor`: hex string (default: '' = theme default)
+  - Note: Settings changes are now pushed live to open views via `onSettingsChanged()`
 
 ### Styles Architecture
 
 - **src/styles/main.scss**: Entry point for styles, uses @use to import modules
-- **src/styles/_variables.scss**: SCSS variables (colors, sizes)
+- **src/styles/_variables.scss**: SCSS variables (colors, sizes); progress colors use CSS custom properties with fallbacks (`--pomodoro-work-color`, `--pomodoro-break-color`)
 - **src/styles/components/**: Component-specific styles
   - `_base.scss`: Base container and layout
   - `_clock.scss`: SVG clock face, tick marks, second hand
@@ -144,7 +156,10 @@ npm version patch|minor|major
 
 ### Assets
 
-- **alarm.mp3**: Sound effect played when timer completes
+- **assets/alarm.mp3**: Default alarm sound
+- **assets/bell.mp3**: Bell sound option
+- **assets/chime.mp3**: Chime sound option
+- **assets/digital.mp3**: Digital alarm sound option
 
 ## Build System
 
@@ -168,7 +183,7 @@ npm version patch|minor|major
 - `TODO_STORAGE_KEY = "pomodoro-todo-list"`: localStorage key for todo state
 - `TODO_SCHEMA_VERSION = 1`: Current todo schema version
 - Clock center: (100, 100), radius: 93 (defined in `PomodoroView`)
-- Default durations: 25min work, 5min short break, 15min long break (in `DEFAULT_SETTINGS`)
+- Default durations: 25min work, 5min break (in `DEFAULT_SETTINGS`)
 - Maximum state ages:
   - Timer: 24 hours (`MAX_STATE_AGE_MS` in `TimerStorage`)
   - Todo: 30 days (`MAX_TODO_STATE_AGE_MS` in `TodoStorage`)
@@ -179,6 +194,6 @@ After building, copy these files to your vault's `.obsidian/plugins/pomodoro-tim
 - `main.js`
 - `styles.css`
 - `manifest.json`
-- `alarm.mp3`
+- `assets/` directory (all .mp3 files)
 
 Then reload Obsidian and enable the plugin.
