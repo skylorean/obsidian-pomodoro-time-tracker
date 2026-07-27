@@ -13,6 +13,8 @@ export interface PomodoroSettings {
 	soundLoop: boolean;
 	workProgressColor: string; // hex or empty for theme default
 	breakProgressColor: string; // hex or empty for theme default
+	logSessions: boolean;
+	sessionRetentionDays: number;
 }
 
 export const DEFAULT_SETTINGS: PomodoroSettings = {
@@ -25,6 +27,8 @@ export const DEFAULT_SETTINGS: PomodoroSettings = {
 	soundLoop: true,
 	workProgressColor: '',
 	breakProgressColor: '',
+	logSessions: true,
+	sessionRetentionDays: 90,
 };
 
 export class PomodoroSettingTab extends PluginSettingTab {
@@ -181,6 +185,37 @@ export class PomodoroSettingTab extends PluginSettingTab {
 							this.plugin.settings.breakProgressColor = trimmed;
 							await this.plugin.saveSettings();
 						}
+					}),
+			);
+
+		// ==================== Session Log Settings ====================
+		new Setting(containerEl).setName("Session log").setHeading();
+
+		new Setting(containerEl)
+			.setName("Log work sessions")
+			.setDesc(
+				"Record completed work sessions in sessions.json next to the plugin",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.logSessions)
+					.onChange(async (value) => {
+						this.plugin.settings.logSessions = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Keep session history for")
+			.setDesc("Days of history to keep. Older sessions are removed.")
+			.addSlider((slider) =>
+				slider
+					.setLimits(7, 365, 7)
+					.setValue(this.plugin.settings.sessionRetentionDays)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.sessionRetentionDays = value;
+						await this.plugin.saveSettings();
 					}),
 			);
 	}

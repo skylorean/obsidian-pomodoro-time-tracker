@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import { TimerStorage } from "./timerStorage";
+import { SessionLog } from "./sessionLog";
 import { TodoListManager } from "./todoListManager";
 import type { TimerState, TimerMode } from "./types";
 import type { PomodoroSettings } from "./settings";
@@ -36,6 +37,8 @@ export class PomodoroView extends ItemView {
 
 	// Storage for timer state persistence
 	private readonly storage: TimerStorage;
+	// Append-only log of finished work sessions
+	private readonly sessionLog: SessionLog;
 	// Flag to show "Resume" instead of "Start" when restoring paused state
 	private wasRestoredFromPause = false;
 	// Message to show if timer expired while away
@@ -56,6 +59,9 @@ export class PomodoroView extends ItemView {
 
 		// Initialize storage with app instance
 		this.storage = new TimerStorage(this.app);
+
+		// Session log writes to sessions.json next to the plugin
+		this.sessionLog = new SessionLog(this.plugin);
 
 		// Initialize todo list manager
 		this.todoManager = new TodoListManager(this.app, this.plugin);
@@ -310,6 +316,7 @@ export class PomodoroView extends ItemView {
 	}
 
 	private onTimerComplete() {
+		this.sessionLog.recordCompletion(this.mode, this.initialSeconds);
 		this.stopTimer();
 		this.storage.clear();
 		if (this.pauseBtn)
@@ -438,6 +445,13 @@ export class PomodoroView extends ItemView {
 
 	private switchMode(newMode: TimerMode) {
 		if (this.mode === newMode) return;
+
+		// Before the fields below are reset: this is the single exit point
+		// for a session — End session and both mode toggles land here.
+		this.sessionLog.recordEarlyEnd(
+			this.mode,
+			this.initialSeconds - this.timerSeconds,
+		);
 
 		this.stopAlarmSound();
 
