@@ -1,4 +1,4 @@
-import { App, Notice } from "obsidian";
+import { App, Notice, debounce } from "obsidian";
 import { FileSuggestModal } from "./FileSuggestModal";
 import { parseWikiLinks } from "./wikiLinkParser";
 import type { TodoTask } from "./types";
@@ -22,6 +22,20 @@ export class TodoListManager {
 
 	// Task data reference (owned by plugin)
 	private readonly tasks: TodoTask[];
+
+	/**
+	 * Debounced write to data.json. saveTodoState() fires on every input
+	 * event of the description textarea; without debounce each keystroke
+	 * rewrites the whole file. save() flushes pending writes on close.
+	 */
+	private readonly debouncedSave = debounce(
+		() => {
+			this.plugin.tasks = this.tasks;
+			void this.plugin.savePluginData();
+		},
+		500,
+		true,
+	);
 
 	constructor(
 		private readonly app: App,
@@ -100,6 +114,7 @@ export class TodoListManager {
 	 * Call this when the view is closed.
 	 */
 	save(): void {
+		this.debouncedSave.cancel();
 		this.plugin.tasks = this.tasks;
 		void this.plugin.savePluginData();
 	}
@@ -349,8 +364,7 @@ export class TodoListManager {
 	 * Saves todo state to plugin data
 	 */
 	private saveTodoState(): void {
-		this.plugin.tasks = this.tasks;
-		void this.plugin.savePluginData();
+		this.debouncedSave();
 	}
 
 	// ==================== Drag & Drop ====================

@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
 	PomodoroSettings,
@@ -20,6 +20,13 @@ const DEFAULT_DATA: PomodoroPluginData = {
 export default class PomodoroTimerPlugin extends Plugin {
 	settings: PomodoroSettings;
 	tasks: TodoTask[] = [];
+
+	/**
+	 * Set when data.json exists but could not be parsed (e.g. a git merge
+	 * left conflict markers in it). While set, saving is disabled so the
+	 * broken file is never overwritten with defaults.
+	 */
+	private dataLoadFailed = false;
 
 	async onload() {
 		await this.loadPluginData();
@@ -67,12 +74,36 @@ export default class PomodoroTimerPlugin extends Plugin {
 	}
 
 	private async loadPluginData() {
-		const data = (await this.loadData()) as Partial<PomodoroPluginData>;
+		const data = (await this.loadData()) as Partial<PomodoroPluginData> | null;
+
+		// loadData() returns null both on a fresh install and when data.json
+		// is unreadable. Only the latter is dangerous: the next save would
+		// replace the user's file with defaults. Distinguish via exists().
+		if (data === null && (await this.dataFileExists())) {
+			this.dataLoadFailed = true;
+			new Notice(
+				"Pomodoro: data.json could not be read. Nothing will be saved until the file is fixed and Obsidian is reloaded.",
+				0,
+			);
+		}
+
 		this.settings = Object.assign({}, DEFAULT_DATA.settings, data?.settings);
 		this.tasks = data?.tasks || [];
 	}
 
+	private async dataFileExists(): Promise<boolean> {
+		try {
+			return await this.app.vault.adapter.exists(
+				`${this.manifest.dir}/data.json`,
+			);
+		} catch {
+			return false;
+		}
+	}
+
 	public async savePluginData() {
+		// Never overwrite a file we failed to parse
+		if (this.dataLoadFailed) return;
 		await this.saveData({
 			settings: this.settings,
 			tasks: this.tasks,
