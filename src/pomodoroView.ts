@@ -27,6 +27,7 @@ export class PomodoroView extends ItemView {
 	private worker: Worker | null = null;
 	private settings: PomodoroSettings;
 	private audio: HTMLAudioElement | null = null;
+	private audioLoadWarned = false;
 
 	// Clock dimensions
 	private readonly centerX = 100;
@@ -526,7 +527,13 @@ export class PomodoroView extends ItemView {
 		if (this.settings.soundChoice === 'custom' && this.settings.customSoundPath) {
 			return this.settings.customSoundPath;
 		}
-		return `${this.app.vault.configDir}/plugins/obsidian-pomodoro-time-tracker/assets/${this.settings.soundChoice}.mp3`;
+		// manifest.dir is where the plugin is actually installed — a
+		// hardcoded folder name breaks under BRAT or a renamed folder.
+		// Sounds are deployed flat next to main.js, not in assets/.
+		const dir =
+			this.plugin.manifest.dir ??
+			`${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}`;
+		return `${dir}/${this.settings.soundChoice}.mp3`;
 	}
 
 	private getMimeType(path: string): string {
@@ -544,16 +551,20 @@ export class PomodoroView extends ItemView {
 
 		try {
 			const audioPath = this.getAudioPath();
-			const isVaultRelative = this.settings.soundChoice === 'custom' && this.settings.customSoundPath;
-			const fullPath = isVaultRelative ? audioPath : audioPath;
-			const data = await this.app.vault.adapter.readBinary(fullPath);
-			const mimeType = this.getMimeType(fullPath);
+			const data = await this.app.vault.adapter.readBinary(audioPath);
+			const mimeType = this.getMimeType(audioPath);
 			const blob = new Blob([data], { type: mimeType });
 			const audioUrl = URL.createObjectURL(blob);
 			this.audio = new Audio(audioUrl);
 			this.audio.volume = this.settings.soundVolume / 100;
 		} catch (e) {
 			console.warn("Failed to load audio file:", e);
+			// Sound is the only signal that a session ended — surface the
+			// failure once instead of failing silently on every session.
+			if (!this.audioLoadWarned) {
+				this.audioLoadWarned = true;
+				new Notice("Could not load the alarm sound");
+			}
 		}
 	}
 
